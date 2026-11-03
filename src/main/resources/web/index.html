@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Open a business account · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <div class="card" data-testid="signup-card">
+    <h1>Open a business account</h1>
+    <p class="lede">Start with your work email. We'll send a link to confirm it.</p>
+    <form id="signup" novalidate>
+      <div class="field">
+        <label for="email">Work email</label>
+        <input id="email" data-testid="email" type="email" autocomplete="email">
+        <div class="error" data-testid="error-email"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="firstName">First name</label>
+          <input id="firstName" data-testid="firstName" autocomplete="given-name">
+          <div class="error" data-testid="error-firstName"></div>
+        </div>
+        <div class="field">
+          <label for="lastName">Last name</label>
+          <input id="lastName" data-testid="lastName" autocomplete="family-name">
+          <div class="error" data-testid="error-lastName"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="companyName">Company name</label>
+        <input id="companyName" data-testid="companyName" autocomplete="organization">
+        <div class="error" data-testid="error-companyName"></div>
+      </div>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <button type="submit" data-testid="signup-submit">Create account</button>
+    </form>
+  </div>
+
+  <div class="card" data-testid="check-inbox" hidden>
+    <h1>Check your inbox</h1>
+    <p class="lede">We sent a verification link to <strong data-testid="sent-to"></strong>. It expires in 30 minutes.</p>
+    <a class="button" data-testid="open-inbox" href="#">Open demo inbox</a>
+  </div>
+  <p class="demo-note">Ledgerline is a fictional demo app for test automation. No real data is collected.</p>
+</main>
+<script>
+  document.getElementById('signup').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const value = (id) => document.getElementById(id).value;
+    const button = e.submitter;
+    try {
+      const res = await Ledgerline.busy(button, () => Ledgerline.api('POST', '/api/signup', {
+        email: value('email'), firstName: value('firstName'), lastName: value('lastName'), companyName: value('companyName'),
+      }));
+      document.querySelector('[data-testid="signup-card"]').hidden = true;
+      document.querySelector('[data-testid="check-inbox"]').hidden = false;
+      document.querySelector('[data-testid="sent-to"]').textContent = res.email;
+      document.querySelector('[data-testid="open-inbox"]').href = '/inbox.html?to=' + encodeURIComponent(res.email);
+    } catch (err) {
+      Ledgerline.showErrors(err);
+    }
+  });
+</script>
+</body>
+</html>

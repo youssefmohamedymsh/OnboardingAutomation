@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Demo inbox · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <div class="card">
+    <h1>Demo inbox</h1>
+    <p class="lede">Emails Ledgerline has sent to <strong data-testid="inbox-address"></strong>. This stands in for a real mailbox.</p>
+    <div data-testid="emails" style="display:grid;gap:12px"></div>
+    <p data-testid="inbox-empty" class="hint" hidden>No emails yet.</p>
+  </div>
+</main>
+<script>
+  (async () => {
+    const to = new URLSearchParams(location.search).get('to') || '';
+    document.querySelector('[data-testid="inbox-address"]').textContent = to;
+    const { emails } = await Ledgerline.api('GET', '/api/inbox?to=' + encodeURIComponent(to));
+    const list = document.querySelector('[data-testid="emails"]');
+    document.querySelector('[data-testid="inbox-empty"]').hidden = emails.length > 0;
+    for (const mail of emails) {
+      const item = document.createElement('article');
+      item.className = 'email';
+      item.dataset.testid = 'email-item';
+      item.innerHTML = '<div class="meta"></div><strong data-testid="email-subject"></strong><p></p>'
+        + '<a class="button" data-testid="verify-link">Verify email</a>';
+      item.querySelector('.meta').textContent = 'From Ledgerline · ' + new Date(mail.sentAt).toLocaleString();
+      item.querySelector('strong').textContent = mail.subject;
+      item.querySelector('p').textContent = mail.body;
+      item.querySelector('a').href = mail.link;
+      list.appendChild(item);
+    }
+  })();
+</script>
+</body>
+</html>

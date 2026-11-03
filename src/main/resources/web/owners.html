@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Beneficial owners · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <ol class="stepper" data-testid="stepper"></ol>
+  <div class="card">
+    <h1>Beneficial owners</h1>
+    <p class="lede">List everyone who owns 25% or more of the business. We screen each person against sanctions and PEP lists.</p>
+    <form id="owners" novalidate>
+      <div data-testid="owner-list" style="display:grid;gap:12px"></div>
+      <div class="error" data-testid="error-owners"></div>
+      <button type="button" class="secondary" data-testid="add-owner">Add another owner</button>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <button type="submit" data-testid="owners-submit">Save and continue</button>
+    </form>
+  </div>
+</main>
+<template id="owner-template">
+  <section class="owner">
+    <h2></h2>
+    <div class="field">
+      <label>Full legal name</label>
+      <input data-field="fullName">
+      <div class="error" data-error="fullName"></div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Date of birth</label>
+        <input data-field="dateOfBirth" type="date">
+        <div class="error" data-error="dateOfBirth"></div>
+      </div>
+      <div class="field">
+        <label>Nationality</label>
+        <input data-field="nationality" maxlength="2" placeholder="GB">
+        <div class="error" data-error="nationality"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Ownership (%)</label>
+      <input data-field="ownership" type="number" min="25" max="100">
+      <div class="error" data-error="ownership"></div>
+    </div>
+  </section>
+</template>
+<script>
+  Ledgerline.requireSession();
+  const list = document.querySelector('[data-testid="owner-list"]');
+
+  function addOwner(values = {}) {
+    const index = list.children.length;
+    if (index >= 4) return;
+    const node = document.getElementById('owner-template').content.firstElementChild.cloneNode(true);
+    node.dataset.testid = 'owner-' + index;
+    node.querySelector('h2').textContent = 'Owner ' + (index + 1);
+    node.querySelectorAll('[data-field]').forEach((input) => {
+      const field = input.dataset.field;
+      input.id = 'owner-' + index + '-' + field;
+      input.dataset.testid = 'owner-' + index + '-' + field;
+      input.previousElementSibling.htmlFor = input.id;
+      if (values[field] !== undefined) input.value = values[field];
+    });
+    node.querySelectorAll('[data-error]').forEach((el) => {
+      el.dataset.testid = 'error-owners[' + index + '].' + el.dataset.error;
+    });
+    list.appendChild(node);
+  }
+
+  Ledgerline.api('GET', '/api/application').then((app) => {
+    Ledgerline.renderStepper('owners', app.completedSteps);
+    (app.owners && app.owners.length ? app.owners : [{}]).forEach(addOwner);
+  });
+  document.querySelector('[data-testid="add-owner"]').addEventListener('click', () => addOwner());
+
+  document.getElementById('owners').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const owners = [...list.children].map((section) => {
+      const o = {};
+      section.querySelectorAll('[data-field]').forEach((input) => { o[input.dataset.field] = input.value; });
+      return o;
+    });
+    try {
+      await Ledgerline.busy(e.submitter, () => Ledgerline.api('PUT', '/api/application/owners', { owners }));
+      location.href = '/identity.html';
+    } catch (err) {
+      Ledgerline.showErrors(err);
+    }
+  });
+</script>
+</body>
+</html>

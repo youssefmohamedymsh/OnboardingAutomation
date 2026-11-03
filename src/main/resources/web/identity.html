@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>ID document · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <ol class="stepper" data-testid="stepper"></ol>
+  <div class="card">
+    <h1>Verify your identity</h1>
+    <p class="lede">Upload a photo or scan of your ID. PDF, PNG or JPG, up to 5 MB.</p>
+    <form id="document" novalidate>
+      <div class="field">
+        <label for="documentType">Type of ID</label>
+        <select id="documentType" data-testid="documentType">
+          <option value="">Choose…</option>
+          <option value="passport">Passport</option>
+          <option value="national_id">National ID card</option>
+          <option value="driving_licence">Driving licence</option>
+        </select>
+        <div class="error" data-testid="error-documentType"></div>
+      </div>
+      <div class="field">
+        <label for="file">File</label>
+        <input id="file" data-testid="document-file" type="file">
+        <div class="error" data-testid="error-file"></div>
+      </div>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <div class="alert ok" data-testid="document-saved" role="status"></div>
+      <button type="submit" data-testid="document-submit">Upload and continue</button>
+    </form>
+  </div>
+</main>
+<script>
+  Ledgerline.requireSession();
+  Ledgerline.api('GET', '/api/application').then((app) => Ledgerline.renderStepper('document', app.completedSteps));
+
+  document.getElementById('document').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const file = document.getElementById('file').files[0];
+    if (!file) {
+      document.querySelector('[data-testid="error-file"]').textContent = 'Choose a file to upload';
+      return;
+    }
+    try {
+      await Ledgerline.busy(e.submitter, async () => Ledgerline.api('PUT', '/api/application/document', {
+        documentType: document.getElementById('documentType').value,
+        fileName: file.name,
+        mimeType: file.type,
+        contentBase64: await Ledgerline.readFileAsBase64(file),
+      }));
+      location.href = '/review.html';
+    } catch (err) {
+      Ledgerline.showErrors(err);
+    }
+  });
+</script>
+</body>
+</html>

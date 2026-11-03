@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  api:
+    name: API scenarios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - run: mvn -B verify -Dcucumber.filter.tags="@api"
+
+  ui:
+    name: UI scenarios (headless Chrome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - run: mvn -B verify -Dheadless=true -Dcucumber.filter.tags="@ui"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cucumber-report
+          path: |
+            target/cucumber.html
+            target/cucumber-html-reports/

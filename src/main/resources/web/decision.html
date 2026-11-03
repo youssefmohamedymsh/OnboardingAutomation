@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Application decision · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <div class="card">
+    <h1>Your application</h1>
+    <p class="lede" data-testid="decision-message"></p>
+    <p><span class="badge" data-testid="decision-status"></span></p>
+    <dl class="summary"><dt>Risk score</dt><dd data-testid="risk-score"></dd></dl>
+    <ul data-testid="decision-reasons"></ul>
+    <a class="button" data-testid="invite-team-link" href="/team.html" hidden>Invite your team</a>
+  </div>
+</main>
+<script>
+  Ledgerline.requireSession();
+  const copy = {
+    APPROVED: ['Approved', 'Your business account is open.'],
+    MANUAL_REVIEW: ['In manual review', 'A compliance analyst will review your application within 2 business days.'],
+    REJECTED: ['Rejected', "We can't open an account for this business."],
+    DRAFT: ['Not submitted', 'Finish your application to get a decision.'],
+  };
+  Ledgerline.api('GET', '/api/application').then((app) => {
+    const [label, message] = copy[app.status];
+    const badge = document.querySelector('[data-testid="decision-status"]');
+    badge.textContent = label;
+    badge.dataset.status = app.status;
+    document.querySelector('[data-testid="decision-message"]').textContent = message;
+    document.querySelector('[data-testid="risk-score"]').textContent = app.riskScore == null ? '—' : app.riskScore + ' / 100';
+    const reasons = document.querySelector('[data-testid="decision-reasons"]');
+    for (const r of app.decisionReasons) {
+      const li = document.createElement('li');
+      li.dataset.testid = 'decision-reason';
+      li.textContent = r;
+      reasons.appendChild(li);
+    }
+    document.querySelector('[data-testid="invite-team-link"]').hidden = app.status !== 'APPROVED';
+  });
+</script>
+</body>
+</html>

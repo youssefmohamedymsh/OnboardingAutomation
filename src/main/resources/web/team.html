@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Invite your team · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <div class="card">
+    <h1>Invite your team</h1>
+    <p class="lede">Upload a CSV with the columns <code>first_name,last_name,email</code>. Everyone must have an email at your company's domain.</p>
+    <form id="team" novalidate>
+      <div class="field">
+        <label for="teamFile">CSV file</label>
+        <input id="teamFile" data-testid="team-file" type="file" accept=".csv,text/csv">
+        <div class="error" data-testid="error-file"></div>
+      </div>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <button type="submit" data-testid="team-submit">Send invites</button>
+    </form>
+    <div data-testid="invite-result" class="stack" hidden>
+      <div class="alert ok" data-testid="invite-summary"></div>
+      <table data-testid="rejected-table" hidden>
+        <thead><tr><th>Row</th><th>Email</th><th>Problem</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<script>
+  Ledgerline.requireSession();
+  document.getElementById('team').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const file = document.getElementById('teamFile').files[0];
+    if (!file) {
+      document.querySelector('[data-testid="error-file"]').textContent = 'Choose a CSV file';
+      return;
+    }
+    try {
+      const res = await Ledgerline.busy(e.submitter, async () =>
+        Ledgerline.api('POST', '/api/team/invite', { csv: await Ledgerline.readFileAsText(file) }));
+      const result = document.querySelector('[data-testid="invite-result"]');
+      result.hidden = false;
+      document.querySelector('[data-testid="invite-summary"]').textContent =
+        res.invited + (res.invited === 1 ? ' person' : ' people') + ' invited';
+      const table = document.querySelector('[data-testid="rejected-table"]');
+      const body = table.querySelector('tbody');
+      body.innerHTML = '';
+      for (const r of res.rejected) {
+        const tr = document.createElement('tr');
+        tr.dataset.testid = 'rejected-row';
+        for (const v of [r.row, r.email, r.reason]) {
+          const td = document.createElement('td');
+          td.textContent = v;
+          tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+      table.hidden = res.rejected.length === 0;
+    } catch (err) {
+      Ledgerline.showErrors(err);
+    }
+  });
+</script>
+</body>
+</html>

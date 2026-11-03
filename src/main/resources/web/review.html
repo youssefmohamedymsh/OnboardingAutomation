@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Review and submit · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <ol class="stepper" data-testid="stepper"></ol>
+  <div class="card">
+    <h1>Review and submit</h1>
+    <p class="lede">When you submit, we screen your owners and score the application. Most decisions are instant.</p>
+    <dl class="summary" data-testid="summary"></dl>
+    <div class="alert danger" data-testid="form-error" role="alert" style="margin-top:16px"></div>
+    <p style="margin-top:20px"><button type="button" data-testid="submit-application">Submit application</button></p>
+  </div>
+</main>
+<script>
+  Ledgerline.requireSession();
+  const labels = { business: 'Business details', owners: 'Beneficial owners', document: 'ID document' };
+  Ledgerline.api('GET', '/api/application').then((app) => {
+    Ledgerline.renderStepper('review', app.completedSteps);
+    const dl = document.querySelector('[data-testid="summary"]');
+    const add = (k, v, id) => { dl.insertAdjacentHTML('beforeend', '<dt></dt><dd></dd>'); dl.lastElementChild.previousElementSibling.textContent = k; dl.lastElementChild.textContent = v; if (id) dl.lastElementChild.dataset.testid = id; };
+    add('Company', app.business ? app.business.legalName : 'Not added yet', 'summary-company');
+    add('Owners', app.owners ? app.owners.map((o) => o.fullName + ' (' + o.ownership + '%)').join(', ') : 'Not added yet', 'summary-owners');
+    add('ID document', app.document ? app.document.fileName : 'Not added yet', 'summary-document');
+  });
+  document.querySelector('[data-testid="submit-application"]').addEventListener('click', async (e) => {
+    Ledgerline.clearErrors();
+    try {
+      await Ledgerline.busy(e.target, () => Ledgerline.api('POST', '/api/application/submit'));
+      location.href = '/decision.html';
+    } catch (err) {
+      const missing = (err.data && err.data.missing) || [];
+      document.querySelector('[data-testid="form-error"]').textContent = missing.length
+        ? 'Still to do: ' + missing.map((m) => labels[m]).join(', ')
+        : err.message;
+    }
+  });
+</script>
+</body>
+</html>

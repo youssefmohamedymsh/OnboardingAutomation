@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Business details · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <ol class="stepper" data-testid="stepper"></ol>
+  <div class="card">
+    <h1>About your business</h1>
+    <p class="lede">We check these against the company register.</p>
+    <form id="business" novalidate>
+      <div class="field">
+        <label for="legalName">Registered legal name</label>
+        <input id="legalName" data-testid="legalName">
+        <div class="error" data-testid="error-legalName"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="country">Country of registration</label>
+          <select id="country" data-testid="country">
+            <option value="">Choose…</option>
+            <option value="GB">United Kingdom</option>
+            <option value="IE">Ireland</option>
+            <option value="DE">Germany</option>
+            <option value="AE">United Arab Emirates</option>
+          </select>
+          <div class="error" data-testid="error-country"></div>
+        </div>
+        <div class="field">
+          <label for="registrationNumber">Registration number</label>
+          <input id="registrationNumber" data-testid="registrationNumber">
+          <div class="error" data-testid="error-registrationNumber"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="industry">Industry</label>
+          <select id="industry" data-testid="industry">
+            <option value="">Choose…</option>
+            <option value="software">Software and IT</option>
+            <option value="retail">Retail and e-commerce</option>
+            <option value="consulting">Professional services</option>
+            <option value="money_services">Money services</option>
+            <option value="crypto">Crypto assets</option>
+            <option value="gambling">Gambling</option>
+          </select>
+          <div class="error" data-testid="error-industry"></div>
+        </div>
+        <div class="field">
+          <label for="annualTurnover">Annual turnover</label>
+          <select id="annualTurnover" data-testid="annualTurnover">
+            <option value="">Choose…</option>
+            <option value="under_1m">Under 1M</option>
+            <option value="1m_10m">1M to 10M</option>
+            <option value="over_10m">Over 10M</option>
+          </select>
+          <div class="error" data-testid="error-annualTurnover"></div>
+        </div>
+      </div>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <button type="submit" data-testid="business-submit">Save and continue</button>
+    </form>
+  </div>
+</main>
+<script>
+  Ledgerline.requireSession();
+  Ledgerline.api('GET', '/api/application').then((app) => {
+    Ledgerline.renderStepper('business', app.completedSteps);
+    if (app.business) for (const [k, v] of Object.entries(app.business)) document.getElementById(k).value = v;
+  });
+  document.getElementById('business').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const body = {};
+    for (const id of ['legalName', 'country', 'registrationNumber', 'industry', 'annualTurnover']) body[id] = document.getElementById(id).value;
+    try {
+      await Ledgerline.busy(e.submitter, () => Ledgerline.api('PUT', '/api/application/business', body));
+      location.href = '/owners.html';
+    } catch (err) {
+      Ledgerline.showErrors(err);
+    }
+  });
+</script>
+</body>
+</html>

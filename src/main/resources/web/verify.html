@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js"></script>
+<title>Create your password · Ledgerline</title>
+</head>
+<body>
+<header class="top"><a class="logo" href="/index.html">Ledgerline<small>Business · demo</small></a></header>
+<main>
+  <div class="card">
+    <h1>Create your password</h1>
+    <p class="lede">Your email is almost confirmed. Choose a password to protect your account.</p>
+    <form id="verify" novalidate>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" data-testid="password" type="password" autocomplete="new-password">
+        <ul class="rules" data-testid="password-rules">
+          <li>At least 12 characters</li><li>Upper and lowercase letters</li><li>A number and a symbol</li><li>Not your email name</li>
+        </ul>
+      </div>
+      <div class="field">
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" data-testid="confirmPassword" type="password" autocomplete="new-password">
+        <div class="error" data-testid="error-confirmPassword"></div>
+      </div>
+      <div class="alert danger" data-testid="form-error" role="alert"></div>
+      <ul class="rules error" data-testid="failed-rules"></ul>
+      <button type="submit" data-testid="verify-submit">Confirm email and continue</button>
+    </form>
+  </div>
+</main>
+<script>
+  document.getElementById('verify').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    Ledgerline.clearErrors();
+    const failed = document.querySelector('[data-testid="failed-rules"]');
+    failed.innerHTML = '';
+    const password = document.getElementById('password').value;
+    if (password !== document.getElementById('confirmPassword').value) {
+      document.querySelector('[data-testid="error-confirmPassword"]').textContent = "Passwords don't match";
+      return;
+    }
+    const token = new URLSearchParams(location.search).get('token');
+    try {
+      const res = await Ledgerline.busy(e.submitter, () => Ledgerline.api('POST', '/api/verify', { token, password }));
+      Ledgerline.setSession(res.session);
+      location.href = '/business.html';
+    } catch (err) {
+      document.querySelector('[data-testid="form-error"]').textContent = err.message;
+      for (const rule of (err.data && err.data.failedRules) || []) {
+        const li = document.createElement('li');
+        li.dataset.testid = 'failed-rule';
+        li.textContent = rule;
+        failed.appendChild(li);
+      }
+    }
+  });
+</script>
+</body>
+</html>
