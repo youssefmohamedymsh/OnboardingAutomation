@@ -17,6 +17,8 @@
   color: var(--ink);
 }
 * { box-sizing: border-box; }
+/* Components set their own display, so make the hidden attribute always win. */
+[hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); line-height: 1.5; }
 header.top {
   background: var(--card); border-bottom: 1px solid var(--line);

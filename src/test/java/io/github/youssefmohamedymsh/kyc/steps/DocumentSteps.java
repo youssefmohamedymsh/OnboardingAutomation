@@ -8,6 +8,6 @@ public class DocumentSteps {
 
     @When("I upload {string} as my {string}")
     public void uploadDocument(String fileName, String documentType) {
-        new IdentityDocumentPage().upload(documentType, TestFiles.document(fileName));
+        new IdentityDocumentPage().uploadDocument(documentType, TestFiles.document(fileName));
     }
 }

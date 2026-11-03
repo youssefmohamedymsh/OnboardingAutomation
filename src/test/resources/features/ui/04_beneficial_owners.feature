@@ -32,5 +32,5 @@ Feature: Beneficial owners (UBOs)
       | rule              | fullName   | dateOfBirth | nationality    | ownership | field       | message                                         |
       | adult             | Maya Brook | 2015-01-01  | GB             | 100       | dateOfBirth | Beneficial owners must be 18 or older           |
       | 25% threshold     | Maya Brook | 1988-03-14  | GB             | 10        | ownership   | Only list owners with 25% to 100% ownership     |
-      | country code      | Maya Brook | 1988-03-14  | United Kingdom | 100       | nationality | Enter a 2-letter country code, like GB          |
+      | country code      | Maya Brook | 1988-03-14  | 12             | 100       | nationality | Enter a 2-letter country code, like GB          |
       | full name         | Maya       | 1988-03-14  | GB             | 100       | fullName    | Enter the owner's full name as shown on their ID |
